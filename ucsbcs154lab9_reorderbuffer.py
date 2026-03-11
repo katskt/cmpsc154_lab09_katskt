@@ -64,7 +64,7 @@ current_alloc_slot.next <<= pyrtl.select(can_you_alloc, pyrtl.select(current_all
 # commit logic: is the pending at this placevalid? then output and move. 
 # this looks at commit spot. 1 check if current are same. 
 move_commit = pyrtl.WireVector(bitwidth = 1, name = "move_commit")
-move_commit <<= ((current_commit_slot != current_alloc_slot) & (rob_pending[current_commit_slot] == 0 )& ((rob_fill_val_i == 0) | ((rob_fill_val_i == 1) & (rob_fill_val_i != current_commit_slot))))
+move_commit <<= ((current_commit_slot != current_alloc_slot) & (rob_pending[current_commit_slot] == 0 )& ((rob_fill_val_i == 0) | ((rob_fill_val_i == 1) & (rob_fill_slot_i != current_commit_slot))))
 current_commit_slot.next <<= pyrtl.select(move_commit, pyrtl.select(current_commit_slot == 15, 0, current_commit_slot + 1), current_commit_slot)
 ztemp = pyrtl.WireVector(bitwidth = 1, name = "ztemp")
 rob_commit_wen_o <<= move_commit
