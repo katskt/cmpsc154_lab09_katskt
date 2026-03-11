@@ -52,9 +52,12 @@ rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_
 rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_req_val_i, data=1)
 
 rob_alloc_resp_slot_o <<= current_alloc_slot
-rob_alloc_req_rdy_o <<= ~(((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
+rob_alloc_req_rdy_wv = pyrtl.WireVector(bitwidth = 1, name = "rob_alloc_req_rdy_wv")
 
-current_alloc_slot.next <<= pyrtl.select(rob_alloc_req_val_i, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
+rob_alloc_req_rdy_wv <<= ~(((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
+rob_alloc_req_rdy_o <<= rob_alloc_req_rdy_wv
+
+current_alloc_slot.next <<= pyrtl.select(rob_alloc_req_val_i & rob_alloc_req_rdy_wv, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
 #COMMIT
 # commit logic: is the pending at this placevalid? then output and move. 
 # this looks at commit spot. 1 check if current are same. 
@@ -70,7 +73,7 @@ rob_commit_rf_waddr_o <<= pyrtl.select(move_commit, rob_preg[current_commit_slot
 
 # WRITEBACK
 
-rob_pending[rob_fill_slot_i] <<= pyrtl.MemBlock.EnabledWrite(enable=rob_fill_val_i, data=0)
+rob_pending[rob_fill_slot_i] <<= pyrtl.MemBlock.EnabledWrite(enable=(rob_fill_val_i), data=0)
 ztemp <<= (current_commit_slot != current_alloc_slot)
 
 ### Testing and Simulation ###
@@ -107,7 +110,6 @@ def TestOneInstructionFullFlow():
     assert(sim.inspect("rob_commit_slot_o") == assignedSlot)
     assert(sim.inspect("rob_commit_rf_waddr_o") == preg)
     # ROB stays ready
-    sim_trace.render_trace(symbol_len=20)
     assert(sim.inspect("rob_alloc_req_rdy_o") == 1)
     
     sim.step({
@@ -120,6 +122,8 @@ def TestOneInstructionFullFlow():
     assert(sim.inspect("rob_commit_wen_o") == 0)
     # ...and ROB stays ready
     assert(sim.inspect("rob_alloc_req_rdy_o") == 1)
+    sim_trace.render_trace(symbol_len=20)
+
 
 
 if __name__ == "__main__":
