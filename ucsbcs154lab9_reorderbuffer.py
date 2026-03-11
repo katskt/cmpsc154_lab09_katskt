@@ -47,17 +47,19 @@ x <<= rob_pending[0]
 # metadata managed by this module END
 
 #ALLOC
-rob_valid[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_req_val_i, data=1)
-rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_req_val_i, data=rob_alloc_req_preg_i)
-rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_req_val_i, data=1)
-
-rob_alloc_resp_slot_o <<= current_alloc_slot
 rob_alloc_req_rdy_wv = pyrtl.WireVector(bitwidth = 1, name = "rob_alloc_req_rdy_wv")
 
 rob_alloc_req_rdy_wv <<= ~(((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
+
+can_you_alloc = rob_alloc_req_rdy_wv & rob_alloc_req_val_i
+rob_valid[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
+rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=rob_alloc_req_preg_i)
+rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
+
+rob_alloc_resp_slot_o <<= current_alloc_slot
 rob_alloc_req_rdy_o <<= rob_alloc_req_rdy_wv
 
-current_alloc_slot.next <<= pyrtl.select(rob_alloc_req_val_i & rob_alloc_req_rdy_wv, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
+current_alloc_slot.next <<= pyrtl.select(can_you_alloc, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
 #COMMIT
 # commit logic: is the pending at this placevalid? then output and move. 
 # this looks at commit spot. 1 check if current are same. 
