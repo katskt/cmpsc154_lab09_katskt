@@ -42,8 +42,8 @@ rob_valid = pyrtl.MemBlock(bitwidth=1, addrwidth=4, name="rob_valid", max_write_
 rob_pending = pyrtl.MemBlock(bitwidth=1, addrwidth=4, name="rob_pending", max_write_ports=10, max_read_ports=10)
 rob_preg = pyrtl.MemBlock(bitwidth=5, addrwidth=4, name="rob_preg")
 
-x = pyrtl.WireVector(bitwidth = 1, name = "z0p")
-x <<= rob_pending[0]
+x = pyrtl.WireVector(bitwidth = 1, name = "z1p")
+x <<= rob_pending[1]
 # metadata managed by this module END
 
 #ALLOC
@@ -54,7 +54,7 @@ rob_alloc_req_rdy_wv_not.next <<= (((current_alloc_slot + 1 ) == current_commit_
 can_you_alloc = ~rob_alloc_req_rdy_wv_not & rob_alloc_req_val_i
 rob_valid[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
 rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=rob_alloc_req_preg_i)
-write_and_alloc_on_same_cycle = (current_alloc_slot == rob_fill_slot_i) & rob_fill_val_i
+write_and_alloc_on_same_cycle = (current_alloc_slot == rob_fill_slot_i) & rob_fill_val_i & rob_alloc_req_val_i
 rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=pyrtl.select(write_and_alloc_on_same_cycle, 0, 1))
 
 rob_alloc_resp_slot_o <<= current_alloc_slot
@@ -125,8 +125,15 @@ def TestOneInstructionFullFlow():
     assert(sim.inspect("rob_commit_wen_o") == 0)
     # ...and ROB stays ready
     assert(sim.inspect("rob_alloc_req_rdy_o") == 1)
-    sim_trace.render_trace(symbol_len=20)
 
+        
+    sim.step({
+            rob_alloc_req_val_i: 1,
+            rob_alloc_req_preg_i: 3,
+            rob_fill_val_i: 1,
+            rob_fill_slot_i: 1,
+        })
+    sim_trace.render_trace(symbol_len=20)
 
 
 if __name__ == "__main__":
