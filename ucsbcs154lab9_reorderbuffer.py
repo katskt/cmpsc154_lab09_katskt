@@ -54,7 +54,7 @@ rob_alloc_req_rdy_wv_not.next <<= (((current_alloc_slot + 1 ) == current_commit_
 can_you_alloc = ~rob_alloc_req_rdy_wv_not & rob_alloc_req_val_i
 rob_valid[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
 rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=rob_alloc_req_preg_i)
-rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, 0)
+rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data = 1)
 
 rob_alloc_resp_slot_o <<= current_alloc_slot
 rob_alloc_req_rdy_o <<= ~rob_alloc_req_rdy_wv_not
