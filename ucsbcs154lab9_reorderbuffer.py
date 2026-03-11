@@ -47,17 +47,17 @@ x <<= rob_pending[0]
 # metadata managed by this module END
 
 #ALLOC
-rob_alloc_req_rdy_wv = pyrtl.WireVector(bitwidth = 1, name = "rob_alloc_req_rdy_wv")
+rob_alloc_req_rdy_wv_not = pyrtl.Register(bitwidth = 1, name = "rob_alloc_req_rdy_wv")
 
-rob_alloc_req_rdy_wv <<= ~(((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
+rob_alloc_req_rdy_wv_not.next <<= (((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
 
-can_you_alloc = rob_alloc_req_rdy_wv & rob_alloc_req_val_i
+can_you_alloc = ~rob_alloc_req_rdy_wv_not & rob_alloc_req_val_i
 rob_valid[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
 rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=rob_alloc_req_preg_i)
 rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = can_you_alloc, data=1)
 
 rob_alloc_resp_slot_o <<= current_alloc_slot
-rob_alloc_req_rdy_o <<= rob_alloc_req_rdy_wv
+rob_alloc_req_rdy_o <<= ~rob_alloc_req_rdy_wv_not
 
 current_alloc_slot.next <<= pyrtl.select(can_you_alloc, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
 #COMMIT
