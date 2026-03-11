@@ -52,7 +52,7 @@ rob_preg[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_
 rob_pending[current_alloc_slot] <<= pyrtl.MemBlock.EnabledWrite(enable = rob_alloc_req_val_i, data=1)
 
 rob_alloc_resp_slot_o <<= current_alloc_slot
-rob_alloc_req_rdy_o <<= ~((current_alloc_slot + 1 ) == current_commit_slot)
+rob_alloc_req_rdy_o <<= ~(((current_alloc_slot + 1 ) == current_commit_slot) | ((current_alloc_slot == 15) & (current_commit_slot == 0)))
 
 current_alloc_slot.next <<= pyrtl.select(rob_alloc_req_val_i, pyrtl.select(current_alloc_slot == 15, 0, current_alloc_slot + 1 ),current_alloc_slot)
 #COMMIT
